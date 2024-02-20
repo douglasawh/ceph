@@ -78,7 +78,7 @@ public:
   static const uint64_t WAIT_XLOCK       = (1<<2);  // to xlock   (** dup)
   static const uint64_t WAIT_STABLE      = (1<<2);  // for a stable state
   static const uint64_t WAIT_REMOTEXLOCK = (1<<3);  // for a remote xlock
-  static const int WAIT_BITS        = 4;
+  static const int WAIT_BITS             = 4;
   static const uint64_t WAIT_ALL         = ((1<<WAIT_BITS)-1);
 
   static std::string_view get_state_name(int n) {
@@ -175,7 +175,8 @@ public:
 
   SimpleLock(MDSCacheObject *o, LockType *lt) :
     type(lt),
-    parent(o)
+    parent(o),
+    wait_shift(o->get_priority_wait_bit_count())
   {}
   virtual ~SimpleLock() {}
 
@@ -200,7 +201,6 @@ public:
   int get_type() const { return type->type; }
   const sm_t* get_sm() const { return type->sm; }
 
-  int get_wait_shift() const;
   int get_cap_shift() const;
   int get_cap_mask() const;
 
@@ -211,16 +211,16 @@ public:
     parent->encode_lock_state(type->type, bl);
   }
   void finish_waiters(uint64_t mask, int r=0) {
-    parent->finish_waiting(mask << get_wait_shift(), r);
+    parent->finish_waiting(mask << wait_shift, r);
   }
   void take_waiting(uint64_t mask, MDSContext::vec& ls) {
-    parent->take_waiting(mask << get_wait_shift(), ls);
+    parent->take_waiting(mask << wait_shift, ls);
   }
   void add_waiter(uint64_t mask, MDSContext *c) {
-    parent->add_waiter((mask << get_wait_shift()) | MDSCacheObject::WAIT_ORDERED, c);
+    parent->add_waiter((mask << wait_shift) | MDSCacheObject::WAIT_ORDERED, c);
   }
   bool is_waiter_for(uint64_t mask) const {
-    return parent->is_waiter_for(mask << get_wait_shift());
+    return parent->is_waiter_for(mask << wait_shift);
   }
 
   bool is_cached() const {
@@ -603,7 +603,8 @@ public:
 
 protected:
   // parent (what i lock)
-  MDSCacheObject *parent;
+  MDSCacheObject * const parent;
+  const int wait_shift;
 
   // lock state
   __s16 state = LOCK_SYNC;

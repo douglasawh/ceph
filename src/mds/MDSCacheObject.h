@@ -95,6 +95,8 @@ class MDSCacheObject {
   MDSCacheObject() {}
   virtual ~MDSCacheObject() {}
 
+  virtual int get_priority_wait_bit_count() const = 0;
+
   std::string_view generic_pin_name(int p) const;
 
   // printing

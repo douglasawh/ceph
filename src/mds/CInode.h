@@ -398,8 +398,11 @@ class CInode : public MDSCacheObject, public InodeStoreBase, public Counter<CIno
   static const uint64_t WAIT_FROZEN      = (1<<1);
   static const uint64_t WAIT_TRUNC       = (1<<2);
   static const uint64_t WAIT_FLOCK       = (1<<3);
+  static const uint64_t WAIT_BITS        = 4;
+
+  static const uint64_t WAIT_ANY_MASK = (uint64_t)((1<<WAIT_BITS)-1);
   
-  static const uint64_t WAIT_ANY_MASK	= (uint64_t)(-1);
+  int get_priority_wait_bit_count() const override { return WAIT_BITS; };
 
   // misc
   static const unsigned EXPORT_NONCE = 1; // nonce given to replicas created by export

@@ -142,6 +142,8 @@ public:
   // -- wait --
   //static const int WAIT_LOCK_OFFSET = 8;
 
+  int get_priority_wait_bit_count() const override { return 0; };
+
   void add_waiter(uint64_t tag, MDSContext *c) override;
 
   bool is_lt(const MDSCacheObject *r) const override {
